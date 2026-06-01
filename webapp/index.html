@@ -45,6 +45,7 @@
         <button class="nav-chip is-active" data-target="today">Today</button>
         <button class="nav-chip" data-target="week">Week</button>
         <button class="nav-chip" data-target="journal">Journal</button>
+        <button class="nav-chip" data-target="history">History</button>
         <button class="nav-chip" data-target="summary">Statistics</button>
         <button class="nav-chip" data-target="training">Training</button>
         <button class="nav-chip" data-target="meals">Meals</button>
@@ -59,6 +60,9 @@
             <div>
               <p class="panel__eyebrow">Daily Check-in</p>
               <h2>The stuff worth tracking today</h2>
+              <p class="helper-copy" id="today-save-status">
+                Today auto-saves as you update it.
+              </p>
             </div>
             <button class="ghost-button" id="reset-today">Clear today</button>
           </div>
@@ -136,6 +140,9 @@
             <div>
               <p class="panel__eyebrow">Journal</p>
               <h2>Write the day down while it is still real</h2>
+              <p class="helper-copy" id="journal-save-status">
+                Journal entries auto-save as you type.
+              </p>
             </div>
           </div>
           <div class="journal-layout">
@@ -190,6 +197,44 @@
           </div>
         </section>
 
+        <section class="panel" id="history">
+          <div class="panel__header">
+            <div>
+              <p class="panel__eyebrow">History</p>
+              <h2>Review and reopen past days</h2>
+              <p class="helper-copy">
+                Pick a date to inspect your check-in, journal, and routine details from that day.
+              </p>
+            </div>
+          </div>
+          <div class="history-layout">
+            <div class="prep-card">
+              <h3>Open a date</h3>
+              <label class="field-card">
+                <span>Date</span>
+                <input id="history-date" type="date" />
+              </label>
+              <div class="summary-list" id="history-recent"></div>
+            </div>
+            <div class="history-detail">
+              <div class="prep-card">
+                <h3 id="history-title">No day selected</h3>
+                <div class="summary-list" id="history-overview"></div>
+              </div>
+              <div class="two-up">
+                <div class="prep-card">
+                  <h3>Journal snapshot</h3>
+                  <div class="summary-list" id="history-journal"></div>
+                </div>
+                <div class="prep-card">
+                  <h3>Habit completion</h3>
+                  <div class="summary-list" id="history-habits"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
         <section class="panel" id="summary">
           <div class="panel__header">
             <div>
@@ -204,6 +249,16 @@
             <button class="range-chip" data-range="365">Year</button>
           </div>
           <div class="summary-grid" id="summary-grid"></div>
+          <div class="chart-grid">
+            <div class="prep-card">
+              <h3>Consistency trend</h3>
+              <div class="chart-card" id="chart-consistency"></div>
+            </div>
+            <div class="prep-card">
+              <h3>Recovery trend</h3>
+              <div class="chart-card" id="chart-recovery"></div>
+            </div>
+          </div>
           <div class="analysis-layout">
             <div class="prep-card">
               <h3>Habit Analysis</h3>
@@ -364,6 +419,14 @@
             <p class="sync-card__title">Sync status</p>
             <p class="sync-card__body" id="sync-status">
               Local mode only. Add Firebase config to sync across devices.
+            </p>
+          </div>
+
+          <div class="sync-card">
+            <p class="sync-card__title">Sign-in note</p>
+            <p class="sync-card__body">
+              Google sign-in works on your live HTTPS Vercel site, not on the local
+              <code>file://</code> version opened from your computer.
             </p>
           </div>
 

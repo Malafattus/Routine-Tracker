@@ -93,6 +93,7 @@ const defaultDayState = () => ({
   reset: false,
   calorieHit: false,
   proteinHit: false,
+  updatedAt: "",
 });
 
 function makeDefaultState() {
@@ -103,6 +104,7 @@ function makeDefaultState() {
       sleepTarget: 8,
       stepTarget: 7000,
     },
+    historyDate: "",
     days: {},
     groceries: [],
     journal: {},
@@ -132,6 +134,7 @@ function mergeState(incoming) {
     journal: incoming?.journal || {},
     days: incoming?.days || {},
     summaryRange: Number(incoming?.summaryRange || 7),
+    historyDate: incoming?.historyDate || "",
   };
 }
 
@@ -174,6 +177,10 @@ function getJournalState(dateKey = todayKey()) {
   return state.journal[dateKey];
 }
 
+function getSelectedHistoryDate() {
+  return state.historyDate || todayKey();
+}
+
 function setSyncStatus(message) {
   const node = document.getElementById("sync-status");
   if (node) node.textContent = message;
@@ -203,6 +210,11 @@ function queueSync(reason = "updated") {
       setSyncStatus("Cloud sync failed. Your data is still saved on this device.");
     }
   }, 450);
+}
+
+function markTodayUpdated() {
+  const day = getDayState();
+  day.updatedAt = new Date().toISOString();
 }
 
 function formatLongDate(date = new Date()) {
@@ -404,6 +416,63 @@ function buildStatsAnalysis(daysBack) {
   };
 }
 
+function buildChartSvg(points, options = {}) {
+  if (!points.length) {
+    return `<div class="summary-row">Not enough data yet to draw this trend.</div>`;
+  }
+
+  const width = 520;
+  const height = 210;
+  const padX = 28;
+  const padY = 22;
+  const values = points.map((point) => point.value);
+  const min = Math.min(...values);
+  const max = Math.max(...values);
+  const range = max - min || 1;
+  const xStep = points.length > 1 ? (width - padX * 2) / (points.length - 1) : 0;
+  const coords = points.map((point, index) => {
+    const x = padX + index * xStep;
+    const y = height - padY - ((point.value - min) / range) * (height - padY * 2);
+    return { ...point, x, y };
+  });
+
+  const path = coords.map((point, index) => `${index === 0 ? "M" : "L"} ${point.x} ${point.y}`).join(" ");
+  const lineClass = options.teal ? "chart-line chart-line--teal" : "chart-line";
+  const dotClass = options.teal ? "chart-dot chart-dot--teal" : "chart-dot";
+
+  return `
+    <svg class="chart-svg" viewBox="0 0 ${width} ${height}" role="img" aria-label="${options.label || "Trend chart"}">
+      <line class="chart-axis" x1="${padX}" y1="${height - padY}" x2="${width - padX}" y2="${height - padY}" />
+      <line class="chart-axis" x1="${padX}" y1="${padY}" x2="${padX}" y2="${height - padY}" />
+      <path class="${lineClass}" d="${path}" />
+      ${coords.map((point) => `<circle class="${dotClass}" cx="${point.x}" cy="${point.y}" r="4" />`).join("")}
+      ${coords
+        .filter((_, index) => index === 0 || index === coords.length - 1 || coords.length <= 6)
+        .map((point) => `<text class="chart-label" x="${point.x}" y="${height - 6}" text-anchor="middle">${point.label}</text>`)
+        .join("")}
+      <text class="chart-label" x="${padX}" y="${padY - 6}">${round(max, 1)}</text>
+      <text class="chart-label" x="${padX}" y="${height - padY + 16}">${round(min, 1)}</text>
+    </svg>
+  `;
+}
+
+function buildChartSeries(daysBack, selector, bucketSize = 7) {
+  const keys = getPeriodKeys(daysBack);
+  if (!keys.length) return [];
+  const buckets = [];
+  for (let i = 0; i < keys.length; i += bucketSize) {
+    const slice = keys.slice(i, i + bucketSize);
+    const values = slice.map((key) => selector(getDayState(key))).filter((value) => Number.isFinite(value));
+    if (!values.length) continue;
+    const labelDate = new Date(`${slice[slice.length - 1]}T00:00:00`);
+    buckets.push({
+      label: labelDate.toLocaleDateString(undefined, { month: "short", day: "numeric" }),
+      value: averageFromEntries(values, (value) => value, 1),
+    });
+  }
+  return buckets;
+}
+
 function computeWeeklyConsistency() {
   return calculateSummary(7).consistency;
 }
@@ -429,6 +498,7 @@ function renderQuickActions() {
       day[action.key] = !day[action.key];
       if (action.key === "calorieHit" && !day.calories) day.calories = state.settings.calorieTarget;
       if (action.key === "proteinHit" && !day.protein) day.protein = state.settings.proteinTarget;
+      markTodayUpdated();
       queueSync("daily actions");
       syncUI();
     });
@@ -453,6 +523,7 @@ function bindTodayFields() {
         day.proteinHit = protein >= state.settings.proteinTarget;
       }
 
+      markTodayUpdated();
       queueSync("today");
       syncUI();
     });
@@ -463,6 +534,7 @@ function bindTodayFields() {
     delete state.journal[todayKey()];
     getDayState(todayKey());
     getJournalState(todayKey());
+    markTodayUpdated();
     queueSync("reset");
     syncUI();
   });
@@ -506,6 +578,8 @@ function renderSummary() {
   const journalAnalysis = document.getElementById("journal-analysis");
   const patternTitle = document.getElementById("pattern-title");
   const patternBody = document.getElementById("pattern-body");
+  const chartConsistency = document.getElementById("chart-consistency");
+  const chartRecovery = document.getElementById("chart-recovery");
   const analysis = buildStatsAnalysis(state.summaryRange);
 
   document.querySelectorAll(".range-chip").forEach((chip) => {
@@ -565,14 +639,36 @@ function renderSummary() {
     ? `Your current pattern is being shaped by ${analysis.topThemes[0][0]}`
     : "Learning your rhythm";
   patternBody.textContent = analysis.pattern;
+
+  const bucketSize = state.summaryRange <= 30 ? 3 : 14;
+  const consistencySeries = buildChartSeries(state.summaryRange, (day) => computeScore(day), bucketSize);
+  const recoverySeries = buildChartSeries(state.summaryRange, (day) => {
+    const sleep = numberOrNull(day.sleep);
+    const pain = numberOrNull(day.pain);
+    if (sleep === null && pain === null) return NaN;
+    const safeSleep = sleep === null ? state.settings.sleepTarget : sleep;
+    const safePain = pain === null ? 0 : pain;
+    return round(safeSleep - safePain * 0.35, 1);
+  }, bucketSize);
+
+  chartConsistency.innerHTML = buildChartSvg(consistencySeries, { label: "Consistency trend" });
+  chartRecovery.innerHTML = buildChartSvg(recoverySeries, { label: "Recovery trend", teal: true });
 }
 
 function renderJournal() {
   const history = document.getElementById("journal-history");
+  const saveStatus = document.getElementById("journal-save-status");
+  const todayEntry = getJournalState();
   const entries = Object.entries(state.journal)
     .filter(([, entry]) => entry.body?.trim())
     .sort((a, b) => b[0].localeCompare(a[0]))
     .slice(0, 8);
+
+  if (todayEntry.updatedAt) {
+    saveStatus.textContent = `Journal auto-saves as you type. Last saved ${new Date(todayEntry.updatedAt).toLocaleString()}.`;
+  } else {
+    saveStatus.textContent = "Journal entries auto-save as you type.";
+  }
 
   if (!entries.length) {
     history.innerHTML = `<div class="summary-row">No journal entries yet. Start with a few honest sentences about today.</div>`;
@@ -591,6 +687,86 @@ function renderJournal() {
       `;
     })
     .join("");
+}
+
+function renderHistory() {
+  const date = getSelectedHistoryDate();
+  const day = state.days[date];
+  const journal = state.journal[date];
+  const overview = document.getElementById("history-overview");
+  const journalNode = document.getElementById("history-journal");
+  const habitsNode = document.getElementById("history-habits");
+  const title = document.getElementById("history-title");
+  const recent = document.getElementById("history-recent");
+
+  document.getElementById("history-date").value = date;
+  title.textContent = new Date(`${date}T00:00:00`).toLocaleDateString(undefined, {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+  });
+
+  const recentKeys = Object.keys({ ...state.days, ...state.journal })
+    .filter((key, index, array) => array.indexOf(key) === index)
+    .sort((a, b) => b.localeCompare(a))
+    .slice(0, 8);
+
+  recent.innerHTML = recentKeys.length
+    ? recentKeys
+        .map(
+          (key) => `
+            <button class="history-pill ${key === date ? "is-active" : ""}" data-history-key="${key}">
+              ${new Date(`${key}T00:00:00`).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
+            </button>
+          `,
+        )
+        .join("")
+    : `<div class="summary-row">No saved days yet.</div>`;
+
+  document.querySelectorAll("[data-history-key]").forEach((button) => {
+    button.addEventListener("click", () => {
+      state.historyDate = button.dataset.historyKey;
+      persistLocal();
+      renderHistory();
+    });
+  });
+
+  if (!day && !journal) {
+    overview.innerHTML = `<div class="summary-row">No saved routine data for this date yet.</div>`;
+    journalNode.innerHTML = `<div class="summary-row">No journal entry for this date.</div>`;
+    habitsNode.innerHTML = `<div class="summary-row">No habit completion saved for this date.</div>`;
+    return;
+  }
+
+  const score = day ? computeScore(day) : 0;
+  overview.innerHTML = [
+    day ? `Daily score: ${score}/8` : "No daily check-in saved.",
+    day?.sleep ? `Sleep: ${day.sleep}h` : "Sleep not logged.",
+    day?.pain ? `Pain / stiffness: ${day.pain}/10` : "Pain not logged.",
+    day?.calories ? `Calories: ${day.calories}` : "Calories not logged.",
+    day?.protein ? `Protein: ${day.protein}g` : "Protein not logged.",
+    day?.steps ? `Steps: ${day.steps}` : "Steps not logged.",
+  ]
+    .map((row) => `<div class="summary-row">${row}</div>`)
+    .join("");
+
+  journalNode.innerHTML = journal?.body?.trim()
+    ? [
+        journal.title || "Untitled day",
+        journal.mood ? `Mood: ${journal.mood}` : "Mood not logged.",
+        journal.energy ? `Energy: ${journal.energy}` : "Energy not logged.",
+        journal.body,
+      ]
+        .map((row) => `<div class="summary-row">${row}</div>`)
+        .join("")
+    : `<div class="summary-row">No journal entry for this date.</div>`;
+
+  habitsNode.innerHTML = day
+    ? quickActions
+        .map((item) => `<div class="summary-row">${item.label}: ${day[item.key] ? "Done" : "Not done"}</div>`)
+        .join("")
+    : `<div class="summary-row">No habit completion saved for this date.</div>`;
 }
 
 function renderTraining() {
@@ -773,6 +949,11 @@ function bindSettings() {
   });
 
   document.getElementById("google-sign-in").addEventListener("click", async () => {
+    if (window.location.protocol === "file:") {
+      alert("Google sign-in only works on the live Vercel site, not from the local file version.");
+      return;
+    }
+
     if (!authApi?.ready) {
       alert("Firebase is not configured yet. Finish the Firebase setup first.");
       return;
@@ -821,6 +1002,14 @@ function bindJournal() {
   });
 }
 
+function bindHistory() {
+  document.getElementById("history-date").addEventListener("input", (event) => {
+    state.historyDate = event.target.value;
+    persistLocal();
+    renderHistory();
+  });
+}
+
 function bindGroceries() {
   const input = document.getElementById("grocery-input");
   const category = document.getElementById("grocery-category");
@@ -852,6 +1041,7 @@ function bindGroceries() {
 
 function syncTodayFields() {
   const day = getDayState();
+  const status = document.getElementById("today-save-status");
   document.getElementById("sleep").value = day.sleep;
   document.getElementById("pain").value = day.pain;
   document.getElementById("calories").value = day.calories;
@@ -859,6 +1049,12 @@ function syncTodayFields() {
   document.getElementById("steps").value = day.steps;
   document.getElementById("bodyweight").value = day.bodyweight;
   document.getElementById("cleaning-note").value = day.cleaningNote;
+
+  if (day.updatedAt) {
+    status.textContent = `Today auto-saves as you update it. Last saved ${new Date(day.updatedAt).toLocaleString()}.`;
+  } else {
+    status.textContent = "Today auto-saves as you update it.";
+  }
 }
 
 function syncJournalFields() {
@@ -892,6 +1088,7 @@ function syncUI() {
   syncSettings();
   renderSummary();
   renderJournal();
+  renderHistory();
   renderMeals();
   renderGroceries();
 }
@@ -1012,6 +1209,7 @@ function init() {
   bindSummaryRange();
   bindGroceries();
   bindJournal();
+  bindHistory();
   renderWeekPlan();
   renderTraining();
   renderCleaning();
