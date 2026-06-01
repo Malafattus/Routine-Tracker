@@ -1,0 +1,380 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#f26a4b" />
+    <title>Routine Atlas</title>
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="hero">
+        <div class="hero__copy">
+          <p class="eyebrow">Routine Atlas</p>
+          <h1>Your routine, built for real life.</h1>
+          <p class="hero__text">
+            Quick daily check-ins, a weekly map, and a plan that protects your hips, core,
+            lower back, meals, and home life without taking over your day.
+          </p>
+        </div>
+        <div class="hero__panel">
+          <div class="hero__date">
+            <span>Today</span>
+            <strong id="today-date">Monday</strong>
+          </div>
+          <div class="hero__stats">
+            <article class="stat-pill">
+              <span>Daily score</span>
+              <strong id="daily-score">0/8</strong>
+            </article>
+            <article class="stat-pill">
+              <span>7-day streak</span>
+              <strong id="streak-count">0</strong>
+            </article>
+            <article class="stat-pill">
+              <span>Weekly consistency</span>
+              <strong id="weekly-score">0%</strong>
+            </article>
+          </div>
+        </div>
+      </header>
+
+      <nav class="top-nav" aria-label="Sections">
+        <button class="nav-chip is-active" data-target="today">Today</button>
+        <button class="nav-chip" data-target="week">Week</button>
+        <button class="nav-chip" data-target="journal">Journal</button>
+        <button class="nav-chip" data-target="summary">Statistics</button>
+        <button class="nav-chip" data-target="training">Training</button>
+        <button class="nav-chip" data-target="meals">Meals</button>
+        <button class="nav-chip" data-target="groceries">Groceries</button>
+        <button class="nav-chip" data-target="home">Home</button>
+        <button class="nav-chip" data-target="settings">Settings</button>
+      </nav>
+
+      <main class="content">
+        <section class="panel active" id="today">
+          <div class="panel__header">
+            <div>
+              <p class="panel__eyebrow">Daily Check-in</p>
+              <h2>The stuff worth tracking today</h2>
+            </div>
+            <button class="ghost-button" id="reset-today">Clear today</button>
+          </div>
+
+          <div class="quick-grid" id="quick-actions"></div>
+
+          <div class="section-stack">
+            <div class="section-intro">
+              <div>
+                <p class="panel__eyebrow">Health Metrics</p>
+                <h3>Capture the basics without friction</h3>
+              </div>
+            </div>
+            <div class="metrics-grid">
+              <label class="field-card">
+                <span>Sleep hours</span>
+                <input id="sleep" type="number" min="0" max="14" step="0.5" />
+              </label>
+              <label class="field-card">
+                <span>Pain / stiffness</span>
+                <input id="pain" type="number" min="0" max="10" step="1" />
+              </label>
+              <label class="field-card">
+                <span>Calories</span>
+                <input id="calories" type="number" min="0" step="10" />
+              </label>
+              <label class="field-card">
+                <span>Protein (g)</span>
+                <input id="protein" type="number" min="0" step="5" />
+              </label>
+              <label class="field-card">
+                <span>Steps</span>
+                <input id="steps" type="number" min="0" step="250" />
+              </label>
+              <label class="field-card">
+                <span>Bodyweight</span>
+                <input id="bodyweight" type="number" min="0" step="0.1" />
+              </label>
+            </div>
+          </div>
+
+          <div class="two-up two-up--balanced">
+            <label class="field-card field-card--large">
+              <span>Reset / cleaning task</span>
+              <textarea id="cleaning-note" rows="4" placeholder="Kitchen reset, laundry, groceries, bathroom..."></textarea>
+            </label>
+            <div class="spotlight-card">
+              <p class="panel__eyebrow">Today’s Focus</p>
+              <h3>Protect the minimum day first</h3>
+              <p>
+                If the day gets messy, keep the floor high: mobility, one walk or workout, protein,
+                and a reset task. Everything else is extra credit.
+              </p>
+              <ul class="clean-list">
+                <li>Keep pain mild and movement controlled</li>
+                <li>Batch the next meal before you need it</li>
+                <li>Use the journal tab for a real end-of-day reflection</li>
+              </ul>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel" id="week">
+          <div class="panel__header">
+            <div>
+              <p class="panel__eyebrow">Weekly Planner</p>
+              <h2>Map the week once so daily decisions get easier</h2>
+            </div>
+          </div>
+          <div class="week-board" id="week-board"></div>
+        </section>
+
+        <section class="panel" id="journal">
+          <div class="panel__header">
+            <div>
+              <p class="panel__eyebrow">Journal</p>
+              <h2>Write the day down while it is still real</h2>
+            </div>
+          </div>
+          <div class="journal-layout">
+            <div class="journal-editor">
+              <label class="field-card">
+                <span>Entry title</span>
+                <input id="journal-title" type="text" placeholder="What defined today?" />
+              </label>
+              <div class="metrics-grid metrics-grid--journal">
+                <label class="field-card">
+                  <span>Mood</span>
+                  <select id="journal-mood">
+                    <option value="">Choose one</option>
+                    <option>Grounded</option>
+                    <option>Good</option>
+                    <option>Flat</option>
+                    <option>Stressed</option>
+                    <option>Overloaded</option>
+                  </select>
+                </label>
+                <label class="field-card">
+                  <span>Energy</span>
+                  <select id="journal-energy">
+                    <option value="">Choose one</option>
+                    <option>High</option>
+                    <option>Steady</option>
+                    <option>Low</option>
+                    <option>Drained</option>
+                  </select>
+                </label>
+              </div>
+              <label class="field-card field-card--large">
+                <span>Journal entry</span>
+                <textarea id="journal-body" rows="10" placeholder="How did the day feel? What worked? What got in the way? What do you want tomorrow-you to remember?"></textarea>
+              </label>
+            </div>
+            <div class="journal-side">
+              <div class="prep-card">
+                <h3>Recent entries</h3>
+                <div class="summary-list" id="journal-history"></div>
+              </div>
+              <div class="spotlight-card spotlight-card--soft">
+                <p class="panel__eyebrow">Journal prompts</p>
+                <h3>Keep it honest, not polished</h3>
+                <ul class="clean-list">
+                  <li>What made today easier than expected?</li>
+                  <li>Where did pain, stress, or fatigue change your choices?</li>
+                  <li>What one adjustment would make tomorrow smoother?</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel" id="summary">
+          <div class="panel__header">
+            <div>
+              <p class="panel__eyebrow">Statistics</p>
+              <h2>Patterns, trends, and self-knowledge</h2>
+            </div>
+          </div>
+          <div class="range-switch" id="summary-ranges">
+            <button class="range-chip is-active" data-range="7">Week</button>
+            <button class="range-chip" data-range="30">Month</button>
+            <button class="range-chip" data-range="183">6 Months</button>
+            <button class="range-chip" data-range="365">Year</button>
+          </div>
+          <div class="summary-grid" id="summary-grid"></div>
+          <div class="analysis-layout">
+            <div class="prep-card">
+              <h3>Habit Analysis</h3>
+              <div class="summary-list" id="habit-analysis"></div>
+            </div>
+            <div class="prep-card">
+              <h3>Journal Analysis</h3>
+              <div class="summary-list" id="journal-analysis"></div>
+            </div>
+          </div>
+          <div class="two-up">
+            <div class="prep-card">
+              <h3>Highlights</h3>
+              <div class="summary-list" id="summary-highlights"></div>
+            </div>
+            <div class="prep-card">
+              <h3>What To Adjust</h3>
+              <div class="summary-list" id="summary-adjustments"></div>
+            </div>
+          </div>
+          <div class="insight-strip">
+            <div class="spotlight-card spotlight-card--soft">
+              <p class="panel__eyebrow">Behavior Pattern</p>
+              <h3 id="pattern-title">Learning your rhythm</h3>
+              <p id="pattern-body">
+                Keep logging days and reflections. This section will turn your habits into patterns you can actually use.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel" id="training">
+          <div class="panel__header">
+            <div>
+              <p class="panel__eyebrow">Training</p>
+              <h2>Lower-back friendly structure</h2>
+            </div>
+          </div>
+          <div class="training-layout">
+            <div class="spotlight-card">
+              <p class="panel__eyebrow">Training Standard</p>
+              <h3>Build capacity without feeding the injury loop</h3>
+              <p>
+                Your training plan is here to rebuild hips, core, and legs while keeping the lower
+                back calm. The goal is repeatable effort, not random hard sessions.
+              </p>
+              <ul class="clean-list">
+                <li>Stop a set when form starts protecting the pain instead of training the pattern</li>
+                <li>Keep upper-body work supportive, not the main event</li>
+                <li>Progress range, control, and reps before load</li>
+              </ul>
+            </div>
+            <div class="training-grid" id="training-list"></div>
+          </div>
+        </section>
+
+        <section class="panel" id="meals">
+          <div class="panel__header">
+            <div>
+              <p class="panel__eyebrow">Meals</p>
+              <h2>Prep enough to stay consistent, not perfect</h2>
+            </div>
+          </div>
+          <div class="meal-layout">
+            <div class="meal-cards" id="meal-cards"></div>
+            <div class="prep-card">
+              <h3>Weekly prep checklist</h3>
+              <div id="prep-checklist" class="checklist"></div>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel" id="groceries">
+          <div class="panel__header">
+            <div>
+              <p class="panel__eyebrow">Groceries</p>
+              <h2>Your running list, separate from the daily log</h2>
+            </div>
+          </div>
+          <div class="grocery-entry">
+            <label class="field-card">
+              <span>Item</span>
+              <input id="grocery-input" type="text" placeholder="Chicken, rice, yogurt, berries..." />
+            </label>
+            <label class="field-card">
+              <span>Category</span>
+              <select id="grocery-category">
+                <option>Protein</option>
+                <option>Carbs</option>
+                <option>Produce</option>
+                <option>Snacks</option>
+                <option>Household</option>
+                <option>Other</option>
+              </select>
+            </label>
+            <button class="warm-button grocery-add" id="add-grocery">Add item</button>
+          </div>
+          <div class="two-up">
+            <div class="prep-card">
+              <h3>Need To Buy</h3>
+              <div class="checklist" id="grocery-active"></div>
+            </div>
+            <div class="prep-card">
+              <h3>Recently Bought</h3>
+              <div class="checklist" id="grocery-completed"></div>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel" id="home">
+          <div class="panel__header">
+            <div>
+              <p class="panel__eyebrow">Home Life</p>
+              <h2>Cleaning and life admin without a spiral</h2>
+            </div>
+          </div>
+          <div class="stack-list" id="cleaning-list"></div>
+        </section>
+
+        <section class="panel" id="settings">
+          <div class="panel__header">
+            <div>
+              <p class="panel__eyebrow">Settings</p>
+              <h2>Targets, backup, and install</h2>
+            </div>
+          </div>
+          <div class="settings-grid">
+            <label class="field-card">
+              <span>Calorie target</span>
+              <input id="target-calories" type="number" min="0" step="50" />
+            </label>
+            <label class="field-card">
+              <span>Protein target</span>
+              <input id="target-protein" type="number" min="0" step="5" />
+            </label>
+            <label class="field-card">
+              <span>Sleep target</span>
+              <input id="target-sleep" type="number" min="0" step="0.5" />
+            </label>
+            <label class="field-card">
+              <span>Step target</span>
+              <input id="target-steps" type="number" min="0" step="250" />
+            </label>
+          </div>
+
+          <div class="backup-actions">
+            <button class="warm-button" id="google-sign-in">Sign in with Google</button>
+            <button class="ghost-button" id="sign-out">Sign out</button>
+            <button class="warm-button" id="export-data">Export backup</button>
+            <label class="ghost-button ghost-button--file">
+              Import backup
+              <input id="import-data" type="file" accept="application/json" hidden />
+            </label>
+            <button class="ghost-button" id="install-app">Install app</button>
+          </div>
+
+          <div class="sync-card">
+            <p class="sync-card__title">Sync status</p>
+            <p class="sync-card__body" id="sync-status">
+              Local mode only. Add Firebase config to sync across devices.
+            </p>
+          </div>
+
+          <p class="helper-copy">
+            This app still works offline and keeps local backups. Once Firebase is configured
+            and the site is hosted, your updates can follow you across devices for free.
+          </p>
+        </section>
+      </main>
+    </div>
+
+    <script src="./app.js" type="module"></script>
+  </body>
+</html>
