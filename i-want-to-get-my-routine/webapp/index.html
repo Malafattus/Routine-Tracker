@@ -45,7 +45,7 @@
         <button class="nav-chip is-active" data-target="today">Today</button>
         <button class="nav-chip" data-target="week">Week</button>
         <button class="nav-chip" data-target="journal">Journal</button>
-        <button class="nav-chip" data-target="summary">Summary</button>
+        <button class="nav-chip" data-target="summary">Statistics</button>
         <button class="nav-chip" data-target="training">Training</button>
         <button class="nav-chip" data-target="meals">Meals</button>
         <button class="nav-chip" data-target="groceries">Groceries</button>
@@ -193,8 +193,8 @@
         <section class="panel" id="summary">
           <div class="panel__header">
             <div>
-              <p class="panel__eyebrow">Summaries</p>
-              <h2>Weekly, monthly, 6-month, and yearly patterns</h2>
+              <p class="panel__eyebrow">Statistics</p>
+              <h2>Patterns, trends, and self-knowledge</h2>
             </div>
           </div>
           <div class="range-switch" id="summary-ranges">
@@ -204,6 +204,16 @@
             <button class="range-chip" data-range="365">Year</button>
           </div>
           <div class="summary-grid" id="summary-grid"></div>
+          <div class="analysis-layout">
+            <div class="prep-card">
+              <h3>Habit Analysis</h3>
+              <div class="summary-list" id="habit-analysis"></div>
+            </div>
+            <div class="prep-card">
+              <h3>Journal Analysis</h3>
+              <div class="summary-list" id="journal-analysis"></div>
+            </div>
+          </div>
           <div class="two-up">
             <div class="prep-card">
               <h3>Highlights</h3>
@@ -212,6 +222,15 @@
             <div class="prep-card">
               <h3>What To Adjust</h3>
               <div class="summary-list" id="summary-adjustments"></div>
+            </div>
+          </div>
+          <div class="insight-strip">
+            <div class="spotlight-card spotlight-card--soft">
+              <p class="panel__eyebrow">Behavior Pattern</p>
+              <h3 id="pattern-title">Learning your rhythm</h3>
+              <p id="pattern-body">
+                Keep logging days and reflections. This section will turn your habits into patterns you can actually use.
+              </p>
             </div>
           </div>
         </section>

@@ -289,6 +289,121 @@ function calculateSummary(daysBack) {
   };
 }
 
+const themeKeywords = {
+  training: ["workout", "lift", "training", "exercise", "gym", "session", "walk"],
+  pain: ["pain", "stiff", "stiffness", "back", "hip", "hips", "sore", "flare"],
+  energy: ["energy", "tired", "drained", "awake", "fatigue", "exhausted"],
+  food: ["meal", "meals", "protein", "calories", "food", "ate", "hungry", "snack"],
+  stress: ["stress", "stressed", "anxious", "overwhelmed", "pressure", "tense"],
+  work: ["work", "job", "shift", "office", "busy", "meeting"],
+  sleep: ["sleep", "bed", "rest", "late", "morning", "night"],
+  discipline: ["routine", "consistent", "discipline", "focus", "momentum", "reset"],
+};
+
+function getJournalEntriesForPeriod(daysBack) {
+  const keys = getPeriodKeys(daysBack);
+  return keys
+    .map((key) => ({ date: key, ...(state.journal[key] || {}) }))
+    .filter((entry) => entry.body?.trim());
+}
+
+function averageFromEntries(entries, selector, digits = 1) {
+  const values = entries.map(selector).filter((value) => Number.isFinite(value));
+  if (!values.length) return 0;
+  return round(values.reduce((sum, value) => sum + value, 0) / values.length, digits);
+}
+
+function getTopWeekday(daysBack) {
+  const buckets = {};
+  getPeriodKeys(daysBack).forEach((key) => {
+    const weekday = new Date(`${key}T00:00:00`).toLocaleDateString(undefined, { weekday: "long" });
+    buckets[weekday] ||= [];
+    buckets[weekday].push(computeScore(getDayState(key)));
+  });
+  const ranked = Object.entries(buckets)
+    .map(([day, scores]) => ({ day, score: averageFromEntries(scores, (value) => value, 1) }))
+    .sort((a, b) => b.score - a.score);
+  return ranked[0] || null;
+}
+
+function analyzeJournalThemes(daysBack) {
+  const entries = getJournalEntriesForPeriod(daysBack);
+  const counts = Object.fromEntries(Object.keys(themeKeywords).map((key) => [key, 0]));
+  const moods = {};
+  const energies = {};
+  let totalWords = 0;
+
+  entries.forEach((entry) => {
+    const text = `${entry.title || ""} ${entry.body || ""}`.toLowerCase();
+    totalWords += text.split(/\s+/).filter(Boolean).length;
+    Object.entries(themeKeywords).forEach(([theme, words]) => {
+      if (words.some((word) => text.includes(word))) counts[theme] += 1;
+    });
+    if (entry.mood) moods[entry.mood] = (moods[entry.mood] || 0) + 1;
+    if (entry.energy) energies[entry.energy] = (energies[entry.energy] || 0) + 1;
+  });
+
+  const topThemes = Object.entries(counts)
+    .filter(([, count]) => count > 0)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 3);
+
+  const topMood = Object.entries(moods).sort((a, b) => b[1] - a[1])[0];
+  const topEnergy = Object.entries(energies).sort((a, b) => b[1] - a[1])[0];
+
+  return {
+    entries,
+    topThemes,
+    topMood,
+    topEnergy,
+    averageWords: entries.length ? Math.round(totalWords / entries.length) : 0,
+  };
+}
+
+function buildStatsAnalysis(daysBack) {
+  const keys = getPeriodKeys(daysBack);
+  const entries = keys.map((key) => ({ date: key, ...getDayState(key) }));
+  const workoutEntries = entries.filter((entry) => entry.workout);
+  const nonWorkoutEntries = entries.filter((entry) => !entry.workout);
+  const highScoreEntries = entries.filter((entry) => computeScore(entry) >= 5);
+  const journal = analyzeJournalThemes(daysBack);
+  const bestWeekday = getTopWeekday(daysBack);
+  const sleepWithWorkout = averageFromEntries(workoutEntries, (entry) => numberOrNull(entry.sleep), 1);
+  const sleepWithoutWorkout = averageFromEntries(nonWorkoutEntries, (entry) => numberOrNull(entry.sleep), 1);
+  const painWorkout = averageFromEntries(workoutEntries, (entry) => numberOrNull(entry.pain), 1);
+  const painNonWorkout = averageFromEntries(nonWorkoutEntries, (entry) => numberOrNull(entry.pain), 1);
+  const stepsHighScore = averageFromEntries(highScoreEntries, (entry) => numberOrNull(entry.steps), 0);
+
+  return {
+    habitRows: [
+      bestWeekday
+        ? `${bestWeekday.day} has been your strongest day on average at ${bestWeekday.score}/8.`
+        : "Keep logging days and the app will identify your strongest weekday rhythm.",
+      workoutEntries.length
+        ? `On workout days you average ${sleepWithWorkout || 0}h sleep and ${painWorkout || 0}/10 pain.`
+        : "No workout-day comparison yet. A few logged sessions will unlock clearer trends.",
+      nonWorkoutEntries.length
+        ? `On non-workout days you average ${sleepWithoutWorkout || 0}h sleep and ${painNonWorkout || 0}/10 pain.`
+        : "No non-workout-day comparison yet.",
+      highScoreEntries.length
+        ? `Your higher-scoring days average ${stepsHighScore || 0} steps, which hints at how movement supports momentum.`
+        : "Once you string together more strong days, this section will show what they have in common.",
+    ],
+    journalRows: [
+      journal.entries.length
+        ? `${journal.entries.length} journal entries were analyzed in this ${summaryRanges[daysBack].toLowerCase()}.`
+        : `No journal entries in this ${summaryRanges[daysBack].toLowerCase()} yet.`,
+      journal.topMood ? `Your most common mood has been ${journal.topMood[0].toLowerCase()}.` : "Mood patterns will appear once you log a few reflections.",
+      journal.topEnergy ? `Your most common energy state has been ${journal.topEnergy[0].toLowerCase()}.` : "Energy patterns will appear once you log them a few times.",
+      journal.averageWords ? `Your average journal entry is about ${journal.averageWords} words.` : "Longer reflections are optional, but even short notes help pattern recognition.",
+    ],
+    topThemes: journal.topThemes,
+    pattern: journal.topThemes.length
+      ? `Your journal keeps circling back to ${journal.topThemes.map(([theme]) => theme).join(", ")}. That usually means these are the levers shaping your routine most right now.`
+      : "Your statistics will start reading your journal once you build up a few entries with real details.",
+  };
+}
+
 function computeWeeklyConsistency() {
   return calculateSummary(7).consistency;
 }
@@ -387,7 +502,11 @@ function renderSummary() {
   const grid = document.getElementById("summary-grid");
   const highlights = document.getElementById("summary-highlights");
   const adjustments = document.getElementById("summary-adjustments");
-  const journalEntries = Object.values(state.journal).filter((entry) => entry.body?.trim()).length;
+  const habitAnalysis = document.getElementById("habit-analysis");
+  const journalAnalysis = document.getElementById("journal-analysis");
+  const patternTitle = document.getElementById("pattern-title");
+  const patternBody = document.getElementById("pattern-body");
+  const analysis = buildStatsAnalysis(state.summaryRange);
 
   document.querySelectorAll(".range-chip").forEach((chip) => {
     chip.classList.toggle("is-active", Number(chip.dataset.range) === state.summaryRange);
@@ -397,12 +516,11 @@ function renderSummary() {
     { label: "Consistency", value: `${summary.consistency}%`, detail: `${summary.loggedDays} logged days in this ${summary.label.toLowerCase()}` },
     { label: "Average daily score", value: `${summary.avgScore}/8`, detail: "Based on your quick check-ins" },
     { label: "Workouts", value: `${summary.workoutDays}`, detail: `${summary.mobilityDays} mobility days and ${summary.walkDays} walk days` },
-    { label: "Nutrition hits", value: `${summary.calorieHitDays}/${summary.proteinHitDays}`, detail: "Calorie target days / protein target days" },
+    { label: "Nutrition hits", value: `${summary.calorieHitDays} / ${summary.proteinHitDays}`, detail: "Calorie-target days / protein-target days" },
     { label: "Average sleep", value: `${summary.avgSleep}h`, detail: `Average pain ${summary.avgPain}/10` },
     { label: "Average steps", value: `${summary.avgSteps}`, detail: `${summary.resetDays} reset-task days` },
     { label: "Average intake", value: `${summary.avgCalories} cal`, detail: `${summary.avgProtein}g protein average` },
-    { label: "Groceries", value: `${summary.groceryBought}`, detail: `${summary.activeGroceries} items still on your list` },
-    { label: "Journal entries", value: `${journalEntries}`, detail: "Reflection days saved in your timeline" },
+    { label: "Groceries", value: `${summary.groceryBought}`, detail: `${summary.activeGroceries} items still on your list` }
   ];
 
   grid.innerHTML = cards
@@ -428,11 +546,25 @@ function renderSummary() {
     summary.consistency < 55 ? "Lower the minimum daily standard so you can string together easier wins." : "Your consistency is solid enough to keep the current minimum day structure.",
     summary.avgSleep && summary.avgSleep < state.settings.sleepTarget ? "Sleep is under target. Protect bedtime before adding more training volume." : "Sleep is near target or not tracked enough yet.",
     summary.proteinHitDays < Math.max(3, Math.ceil(summary.loggedDays / 2)) ? "Protein targets are lagging. Make one protein snack automatic." : "Protein adherence is holding up well.",
-    summary.activeGroceries > 8 ? "Your grocery list is getting long. Clear or buy the oldest items first." : "Your grocery list is manageable right now.",
+    summary.activeGroceries > 8 ? "Your grocery list is getting long. Clear or buy the oldest items first." : "Your grocery list is manageable right now."
   ];
 
   highlights.innerHTML = highlightRows.map((row) => `<div class="summary-row">${row}</div>`).join("");
   adjustments.innerHTML = adjustmentRows.map((row) => `<div class="summary-row">${row}</div>`).join("");
+  habitAnalysis.innerHTML = analysis.habitRows.map((row) => `<div class="summary-row">${row}</div>`).join("");
+  journalAnalysis.innerHTML = [
+    ...analysis.journalRows,
+    ...(analysis.topThemes.length
+      ? analysis.topThemes.map(([theme, count]) => `${theme[0].toUpperCase()}${theme.slice(1)} shows up in ${count} entries.`)
+      : []),
+  ]
+    .map((row) => `<div class="summary-row">${row}</div>`)
+    .join("");
+
+  patternTitle.textContent = analysis.topThemes.length
+    ? `Your current pattern is being shaped by ${analysis.topThemes[0][0]}`
+    : "Learning your rhythm";
+  patternBody.textContent = analysis.pattern;
 }
 
 function renderJournal() {
