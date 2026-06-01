@@ -246,6 +246,27 @@ code {
   margin-top: 1rem;
 }
 
+.history-picker {
+  display: grid;
+  gap: 0.55rem;
+  margin-top: 1rem;
+}
+
+.history-picker__label {
+  font-size: 0.84rem;
+  color: var(--muted);
+}
+
+.history-picker input {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 0.85rem 0.95rem;
+  background: rgba(255, 255, 255, 0.86);
+  color: var(--ink);
+  min-height: 52px;
+}
+
 .chart-card {
   min-height: 220px;
   display: grid;
