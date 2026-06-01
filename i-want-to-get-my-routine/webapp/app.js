@@ -85,7 +85,6 @@ const defaultDayState = () => ({
   steps: "",
   bodyweight: "",
   cleaningNote: "",
-  notes: "",
   mobility: false,
   workout: false,
   walk: false,
@@ -106,6 +105,7 @@ function makeDefaultState() {
     },
     days: {},
     groceries: [],
+    journal: {},
     summaryRange: 7,
     weekPlan: {
       Monday: { workout: "Day 1", meals: "Chicken rice bowl", cleaning: "Paperwork + reset", focus: "Bracing and squat pattern" },
@@ -129,6 +129,7 @@ function mergeState(incoming) {
     weekPlan: { ...base.weekPlan, ...(incoming?.weekPlan || {}) },
     prepChecks: { ...base.prepChecks, ...(incoming?.prepChecks || {}) },
     groceries: Array.isArray(incoming?.groceries) ? incoming.groceries : [],
+    journal: incoming?.journal || {},
     days: incoming?.days || {},
     summaryRange: Number(incoming?.summaryRange || 7),
   };
@@ -158,6 +159,19 @@ function todayKey() {
 function getDayState(dateKey = todayKey()) {
   if (!state.days[dateKey]) state.days[dateKey] = defaultDayState();
   return state.days[dateKey];
+}
+
+function getJournalState(dateKey = todayKey()) {
+  if (!state.journal[dateKey]) {
+    state.journal[dateKey] = {
+      title: "",
+      mood: "",
+      energy: "",
+      body: "",
+      updatedAt: "",
+    };
+  }
+  return state.journal[dateKey];
 }
 
 function setSyncStatus(message) {
@@ -308,7 +322,7 @@ function renderQuickActions() {
 }
 
 function bindTodayFields() {
-  ["sleep", "pain", "calories", "protein", "steps", "bodyweight", "cleaning-note", "notes"].forEach((id) => {
+  ["sleep", "pain", "calories", "protein", "steps", "bodyweight", "cleaning-note"].forEach((id) => {
     document.getElementById(id).addEventListener("input", (event) => {
       const day = getDayState();
       const storageKey = id === "cleaning-note" ? "cleaningNote" : id;
@@ -331,7 +345,9 @@ function bindTodayFields() {
 
   document.getElementById("reset-today").addEventListener("click", () => {
     delete state.days[todayKey()];
+    delete state.journal[todayKey()];
     getDayState(todayKey());
+    getJournalState(todayKey());
     queueSync("reset");
     syncUI();
   });
@@ -371,6 +387,7 @@ function renderSummary() {
   const grid = document.getElementById("summary-grid");
   const highlights = document.getElementById("summary-highlights");
   const adjustments = document.getElementById("summary-adjustments");
+  const journalEntries = Object.values(state.journal).filter((entry) => entry.body?.trim()).length;
 
   document.querySelectorAll(".range-chip").forEach((chip) => {
     chip.classList.toggle("is-active", Number(chip.dataset.range) === state.summaryRange);
@@ -385,6 +402,7 @@ function renderSummary() {
     { label: "Average steps", value: `${summary.avgSteps}`, detail: `${summary.resetDays} reset-task days` },
     { label: "Average intake", value: `${summary.avgCalories} cal`, detail: `${summary.avgProtein}g protein average` },
     { label: "Groceries", value: `${summary.groceryBought}`, detail: `${summary.activeGroceries} items still on your list` },
+    { label: "Journal entries", value: `${journalEntries}`, detail: "Reflection days saved in your timeline" },
   ];
 
   grid.innerHTML = cards
@@ -415,6 +433,32 @@ function renderSummary() {
 
   highlights.innerHTML = highlightRows.map((row) => `<div class="summary-row">${row}</div>`).join("");
   adjustments.innerHTML = adjustmentRows.map((row) => `<div class="summary-row">${row}</div>`).join("");
+}
+
+function renderJournal() {
+  const history = document.getElementById("journal-history");
+  const entries = Object.entries(state.journal)
+    .filter(([, entry]) => entry.body?.trim())
+    .sort((a, b) => b[0].localeCompare(a[0]))
+    .slice(0, 8);
+
+  if (!entries.length) {
+    history.innerHTML = `<div class="summary-row">No journal entries yet. Start with a few honest sentences about today.</div>`;
+    return;
+  }
+
+  history.innerHTML = entries
+    .map(([date, entry]) => {
+      const preview = entry.body.trim().slice(0, 140);
+      return `
+        <article class="journal-entry-card">
+          <strong>${entry.title || "Untitled day"}</strong>
+          <span class="grocery-item__meta">${new Date(`${date}T00:00:00`).toLocaleDateString()}${entry.mood ? ` - ${entry.mood}` : ""}${entry.energy ? ` - ${entry.energy}` : ""}</span>
+          <p>${preview}${entry.body.trim().length > 140 ? "..." : ""}</p>
+        </article>
+      `;
+    })
+    .join("");
 }
 
 function renderTraining() {
@@ -628,6 +672,23 @@ function bindSummaryRange() {
   });
 }
 
+function bindJournal() {
+  [
+    ["journal-title", "title"],
+    ["journal-mood", "mood"],
+    ["journal-energy", "energy"],
+    ["journal-body", "body"],
+  ].forEach(([id, key]) => {
+    document.getElementById(id).addEventListener("input", (event) => {
+      const entry = getJournalState();
+      entry[key] = event.target.value;
+      entry.updatedAt = new Date().toISOString();
+      queueSync("journal");
+      syncUI();
+    });
+  });
+}
+
 function bindGroceries() {
   const input = document.getElementById("grocery-input");
   const category = document.getElementById("grocery-category");
@@ -666,7 +727,14 @@ function syncTodayFields() {
   document.getElementById("steps").value = day.steps;
   document.getElementById("bodyweight").value = day.bodyweight;
   document.getElementById("cleaning-note").value = day.cleaningNote;
-  document.getElementById("notes").value = day.notes;
+}
+
+function syncJournalFields() {
+  const entry = getJournalState();
+  document.getElementById("journal-title").value = entry.title;
+  document.getElementById("journal-mood").value = entry.mood;
+  document.getElementById("journal-energy").value = entry.energy;
+  document.getElementById("journal-body").value = entry.body;
 }
 
 function syncHeader() {
@@ -687,9 +755,11 @@ function syncSettings() {
 function syncUI() {
   renderQuickActions();
   syncTodayFields();
+  syncJournalFields();
   syncHeader();
   syncSettings();
   renderSummary();
+  renderJournal();
   renderMeals();
   renderGroceries();
 }
@@ -809,6 +879,7 @@ function init() {
   bindSettings();
   bindSummaryRange();
   bindGroceries();
+  bindJournal();
   renderWeekPlan();
   renderTraining();
   renderCleaning();

@@ -44,6 +44,7 @@
       <nav class="top-nav" aria-label="Sections">
         <button class="nav-chip is-active" data-target="today">Today</button>
         <button class="nav-chip" data-target="week">Week</button>
+        <button class="nav-chip" data-target="journal">Journal</button>
         <button class="nav-chip" data-target="summary">Summary</button>
         <button class="nav-chip" data-target="training">Training</button>
         <button class="nav-chip" data-target="meals">Meals</button>
@@ -64,42 +65,59 @@
 
           <div class="quick-grid" id="quick-actions"></div>
 
-          <div class="metrics-grid">
-            <label class="field-card">
-              <span>Sleep hours</span>
-              <input id="sleep" type="number" min="0" max="14" step="0.5" />
-            </label>
-            <label class="field-card">
-              <span>Pain / stiffness</span>
-              <input id="pain" type="number" min="0" max="10" step="1" />
-            </label>
-            <label class="field-card">
-              <span>Calories</span>
-              <input id="calories" type="number" min="0" step="10" />
-            </label>
-            <label class="field-card">
-              <span>Protein (g)</span>
-              <input id="protein" type="number" min="0" step="5" />
-            </label>
-            <label class="field-card">
-              <span>Steps</span>
-              <input id="steps" type="number" min="0" step="250" />
-            </label>
-            <label class="field-card">
-              <span>Bodyweight</span>
-              <input id="bodyweight" type="number" min="0" step="0.1" />
-            </label>
+          <div class="section-stack">
+            <div class="section-intro">
+              <div>
+                <p class="panel__eyebrow">Health Metrics</p>
+                <h3>Capture the basics without friction</h3>
+              </div>
+            </div>
+            <div class="metrics-grid">
+              <label class="field-card">
+                <span>Sleep hours</span>
+                <input id="sleep" type="number" min="0" max="14" step="0.5" />
+              </label>
+              <label class="field-card">
+                <span>Pain / stiffness</span>
+                <input id="pain" type="number" min="0" max="10" step="1" />
+              </label>
+              <label class="field-card">
+                <span>Calories</span>
+                <input id="calories" type="number" min="0" step="10" />
+              </label>
+              <label class="field-card">
+                <span>Protein (g)</span>
+                <input id="protein" type="number" min="0" step="5" />
+              </label>
+              <label class="field-card">
+                <span>Steps</span>
+                <input id="steps" type="number" min="0" step="250" />
+              </label>
+              <label class="field-card">
+                <span>Bodyweight</span>
+                <input id="bodyweight" type="number" min="0" step="0.1" />
+              </label>
+            </div>
           </div>
 
-          <div class="two-up">
+          <div class="two-up two-up--balanced">
             <label class="field-card field-card--large">
               <span>Reset / cleaning task</span>
-              <textarea id="cleaning-note" rows="3" placeholder="Kitchen reset, laundry, groceries, bathroom..."></textarea>
+              <textarea id="cleaning-note" rows="4" placeholder="Kitchen reset, laundry, groceries, bathroom..."></textarea>
             </label>
-            <label class="field-card field-card--large">
-              <span>Notes</span>
-              <textarea id="notes" rows="3" placeholder="How the session felt, what made the day easier, what to adjust..."></textarea>
-            </label>
+            <div class="spotlight-card">
+              <p class="panel__eyebrow">Today’s Focus</p>
+              <h3>Protect the minimum day first</h3>
+              <p>
+                If the day gets messy, keep the floor high: mobility, one walk or workout, protein,
+                and a reset task. Everything else is extra credit.
+              </p>
+              <ul class="clean-list">
+                <li>Keep pain mild and movement controlled</li>
+                <li>Batch the next meal before you need it</li>
+                <li>Use the journal tab for a real end-of-day reflection</li>
+              </ul>
+            </div>
           </div>
         </section>
 
@@ -111,6 +129,65 @@
             </div>
           </div>
           <div class="week-board" id="week-board"></div>
+        </section>
+
+        <section class="panel" id="journal">
+          <div class="panel__header">
+            <div>
+              <p class="panel__eyebrow">Journal</p>
+              <h2>Write the day down while it is still real</h2>
+            </div>
+          </div>
+          <div class="journal-layout">
+            <div class="journal-editor">
+              <label class="field-card">
+                <span>Entry title</span>
+                <input id="journal-title" type="text" placeholder="What defined today?" />
+              </label>
+              <div class="metrics-grid metrics-grid--journal">
+                <label class="field-card">
+                  <span>Mood</span>
+                  <select id="journal-mood">
+                    <option value="">Choose one</option>
+                    <option>Grounded</option>
+                    <option>Good</option>
+                    <option>Flat</option>
+                    <option>Stressed</option>
+                    <option>Overloaded</option>
+                  </select>
+                </label>
+                <label class="field-card">
+                  <span>Energy</span>
+                  <select id="journal-energy">
+                    <option value="">Choose one</option>
+                    <option>High</option>
+                    <option>Steady</option>
+                    <option>Low</option>
+                    <option>Drained</option>
+                  </select>
+                </label>
+              </div>
+              <label class="field-card field-card--large">
+                <span>Journal entry</span>
+                <textarea id="journal-body" rows="10" placeholder="How did the day feel? What worked? What got in the way? What do you want tomorrow-you to remember?"></textarea>
+              </label>
+            </div>
+            <div class="journal-side">
+              <div class="prep-card">
+                <h3>Recent entries</h3>
+                <div class="summary-list" id="journal-history"></div>
+              </div>
+              <div class="spotlight-card spotlight-card--soft">
+                <p class="panel__eyebrow">Journal prompts</p>
+                <h3>Keep it honest, not polished</h3>
+                <ul class="clean-list">
+                  <li>What made today easier than expected?</li>
+                  <li>Where did pain, stress, or fatigue change your choices?</li>
+                  <li>What one adjustment would make tomorrow smoother?</li>
+                </ul>
+              </div>
+            </div>
+          </div>
         </section>
 
         <section class="panel" id="summary">
@@ -146,7 +223,22 @@
               <h2>Lower-back friendly structure</h2>
             </div>
           </div>
-          <div class="stack-list" id="training-list"></div>
+          <div class="training-layout">
+            <div class="spotlight-card">
+              <p class="panel__eyebrow">Training Standard</p>
+              <h3>Build capacity without feeding the injury loop</h3>
+              <p>
+                Your training plan is here to rebuild hips, core, and legs while keeping the lower
+                back calm. The goal is repeatable effort, not random hard sessions.
+              </p>
+              <ul class="clean-list">
+                <li>Stop a set when form starts protecting the pain instead of training the pattern</li>
+                <li>Keep upper-body work supportive, not the main event</li>
+                <li>Progress range, control, and reps before load</li>
+              </ul>
+            </div>
+            <div class="training-grid" id="training-list"></div>
+          </div>
         </section>
 
         <section class="panel" id="meals">
