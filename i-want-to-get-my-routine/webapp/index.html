@@ -1,0 +1,269 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#f26a4b" />
+    <title>Routine Atlas</title>
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="hero">
+        <div class="hero__copy">
+          <p class="eyebrow">Routine Atlas</p>
+          <h1>Your routine, built for real life.</h1>
+          <p class="hero__text">
+            Quick daily check-ins, a weekly map, and a plan that protects your hips, core,
+            lower back, meals, and home life without taking over your day.
+          </p>
+        </div>
+        <div class="hero__panel">
+          <div class="hero__date">
+            <span>Today</span>
+            <strong id="today-date">Monday</strong>
+          </div>
+          <div class="hero__stats">
+            <article class="stat-pill">
+              <span>Daily score</span>
+              <strong id="daily-score">0/8</strong>
+            </article>
+            <article class="stat-pill">
+              <span>7-day streak</span>
+              <strong id="streak-count">0</strong>
+            </article>
+            <article class="stat-pill">
+              <span>Weekly consistency</span>
+              <strong id="weekly-score">0%</strong>
+            </article>
+          </div>
+        </div>
+      </header>
+
+      <nav class="top-nav" aria-label="Sections">
+        <button class="nav-chip is-active" data-target="today">Today</button>
+        <button class="nav-chip" data-target="week">Week</button>
+        <button class="nav-chip" data-target="summary">Summary</button>
+        <button class="nav-chip" data-target="training">Training</button>
+        <button class="nav-chip" data-target="meals">Meals</button>
+        <button class="nav-chip" data-target="groceries">Groceries</button>
+        <button class="nav-chip" data-target="home">Home</button>
+        <button class="nav-chip" data-target="settings">Settings</button>
+      </nav>
+
+      <main class="content">
+        <section class="panel active" id="today">
+          <div class="panel__header">
+            <div>
+              <p class="panel__eyebrow">Daily Check-in</p>
+              <h2>The stuff worth tracking today</h2>
+            </div>
+            <button class="ghost-button" id="reset-today">Clear today</button>
+          </div>
+
+          <div class="quick-grid" id="quick-actions"></div>
+
+          <div class="metrics-grid">
+            <label class="field-card">
+              <span>Sleep hours</span>
+              <input id="sleep" type="number" min="0" max="14" step="0.5" />
+            </label>
+            <label class="field-card">
+              <span>Pain / stiffness</span>
+              <input id="pain" type="number" min="0" max="10" step="1" />
+            </label>
+            <label class="field-card">
+              <span>Calories</span>
+              <input id="calories" type="number" min="0" step="10" />
+            </label>
+            <label class="field-card">
+              <span>Protein (g)</span>
+              <input id="protein" type="number" min="0" step="5" />
+            </label>
+            <label class="field-card">
+              <span>Steps</span>
+              <input id="steps" type="number" min="0" step="250" />
+            </label>
+            <label class="field-card">
+              <span>Bodyweight</span>
+              <input id="bodyweight" type="number" min="0" step="0.1" />
+            </label>
+          </div>
+
+          <div class="two-up">
+            <label class="field-card field-card--large">
+              <span>Reset / cleaning task</span>
+              <textarea id="cleaning-note" rows="3" placeholder="Kitchen reset, laundry, groceries, bathroom..."></textarea>
+            </label>
+            <label class="field-card field-card--large">
+              <span>Notes</span>
+              <textarea id="notes" rows="3" placeholder="How the session felt, what made the day easier, what to adjust..."></textarea>
+            </label>
+          </div>
+        </section>
+
+        <section class="panel" id="week">
+          <div class="panel__header">
+            <div>
+              <p class="panel__eyebrow">Weekly Planner</p>
+              <h2>Map the week once so daily decisions get easier</h2>
+            </div>
+          </div>
+          <div class="week-board" id="week-board"></div>
+        </section>
+
+        <section class="panel" id="summary">
+          <div class="panel__header">
+            <div>
+              <p class="panel__eyebrow">Summaries</p>
+              <h2>Weekly, monthly, 6-month, and yearly patterns</h2>
+            </div>
+          </div>
+          <div class="range-switch" id="summary-ranges">
+            <button class="range-chip is-active" data-range="7">Week</button>
+            <button class="range-chip" data-range="30">Month</button>
+            <button class="range-chip" data-range="183">6 Months</button>
+            <button class="range-chip" data-range="365">Year</button>
+          </div>
+          <div class="summary-grid" id="summary-grid"></div>
+          <div class="two-up">
+            <div class="prep-card">
+              <h3>Highlights</h3>
+              <div class="summary-list" id="summary-highlights"></div>
+            </div>
+            <div class="prep-card">
+              <h3>What To Adjust</h3>
+              <div class="summary-list" id="summary-adjustments"></div>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel" id="training">
+          <div class="panel__header">
+            <div>
+              <p class="panel__eyebrow">Training</p>
+              <h2>Lower-back friendly structure</h2>
+            </div>
+          </div>
+          <div class="stack-list" id="training-list"></div>
+        </section>
+
+        <section class="panel" id="meals">
+          <div class="panel__header">
+            <div>
+              <p class="panel__eyebrow">Meals</p>
+              <h2>Prep enough to stay consistent, not perfect</h2>
+            </div>
+          </div>
+          <div class="meal-layout">
+            <div class="meal-cards" id="meal-cards"></div>
+            <div class="prep-card">
+              <h3>Weekly prep checklist</h3>
+              <div id="prep-checklist" class="checklist"></div>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel" id="groceries">
+          <div class="panel__header">
+            <div>
+              <p class="panel__eyebrow">Groceries</p>
+              <h2>Your running list, separate from the daily log</h2>
+            </div>
+          </div>
+          <div class="grocery-entry">
+            <label class="field-card">
+              <span>Item</span>
+              <input id="grocery-input" type="text" placeholder="Chicken, rice, yogurt, berries..." />
+            </label>
+            <label class="field-card">
+              <span>Category</span>
+              <select id="grocery-category">
+                <option>Protein</option>
+                <option>Carbs</option>
+                <option>Produce</option>
+                <option>Snacks</option>
+                <option>Household</option>
+                <option>Other</option>
+              </select>
+            </label>
+            <button class="warm-button grocery-add" id="add-grocery">Add item</button>
+          </div>
+          <div class="two-up">
+            <div class="prep-card">
+              <h3>Need To Buy</h3>
+              <div class="checklist" id="grocery-active"></div>
+            </div>
+            <div class="prep-card">
+              <h3>Recently Bought</h3>
+              <div class="checklist" id="grocery-completed"></div>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel" id="home">
+          <div class="panel__header">
+            <div>
+              <p class="panel__eyebrow">Home Life</p>
+              <h2>Cleaning and life admin without a spiral</h2>
+            </div>
+          </div>
+          <div class="stack-list" id="cleaning-list"></div>
+        </section>
+
+        <section class="panel" id="settings">
+          <div class="panel__header">
+            <div>
+              <p class="panel__eyebrow">Settings</p>
+              <h2>Targets, backup, and install</h2>
+            </div>
+          </div>
+          <div class="settings-grid">
+            <label class="field-card">
+              <span>Calorie target</span>
+              <input id="target-calories" type="number" min="0" step="50" />
+            </label>
+            <label class="field-card">
+              <span>Protein target</span>
+              <input id="target-protein" type="number" min="0" step="5" />
+            </label>
+            <label class="field-card">
+              <span>Sleep target</span>
+              <input id="target-sleep" type="number" min="0" step="0.5" />
+            </label>
+            <label class="field-card">
+              <span>Step target</span>
+              <input id="target-steps" type="number" min="0" step="250" />
+            </label>
+          </div>
+
+          <div class="backup-actions">
+            <button class="warm-button" id="google-sign-in">Sign in with Google</button>
+            <button class="ghost-button" id="sign-out">Sign out</button>
+            <button class="warm-button" id="export-data">Export backup</button>
+            <label class="ghost-button ghost-button--file">
+              Import backup
+              <input id="import-data" type="file" accept="application/json" hidden />
+            </label>
+            <button class="ghost-button" id="install-app">Install app</button>
+          </div>
+
+          <div class="sync-card">
+            <p class="sync-card__title">Sync status</p>
+            <p class="sync-card__body" id="sync-status">
+              Local mode only. Add Firebase config to sync across devices.
+            </p>
+          </div>
+
+          <p class="helper-copy">
+            This app still works offline and keeps local backups. Once Firebase is configured
+            and the site is hosted, your updates can follow you across devices for free.
+          </p>
+        </section>
+      </main>
+    </div>
+
+    <script src="./app.js" type="module"></script>
+  </body>
+</html>
