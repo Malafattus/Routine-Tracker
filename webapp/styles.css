@@ -242,6 +242,10 @@ code {
   gap: 1.1rem;
 }
 
+#history-recent {
+  margin-top: 1rem;
+}
+
 .chart-card {
   min-height: 220px;
   display: grid;
@@ -411,8 +415,15 @@ code {
 .prep-card,
 .spotlight-card,
 .summary-card {
+  display: grid;
+  align-content: start;
   border-radius: var(--radius-lg);
   padding: 1.1rem;
+}
+
+.field-card {
+  width: 100%;
+  gap: 0.2rem;
 }
 
 .field-card input,
